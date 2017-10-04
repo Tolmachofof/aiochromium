@@ -15,40 +15,43 @@ class Executor:
     
     RECV_TIMEOUT = 1
     
-    def __init__(self, web_sock):
-        self._loop = asyncio.get_event_loop()
+    def __init__(self):
+        self._is_running = False
         self._msg_id = 0
-        self._web_sock = web_sock
         self.ws = None
         
         self._pending_tasks = set()
         self._accepted_tasks = {}
         
-        self._stopping = False
+    @property
+    def is_running(self):
+        return self._is_running
         
-    async def start(self):
+    async def run(self, ws_addr):
         """
         Connects to web socket and runs the messages receive loop.
         """
-        self.ws = await websockets.connect(self._web_sock) if self.ws is None \
-            else self.ws
-        loop = asyncio.get_event_loop()
-        loop.create_task(self._start_recv_loop())
+        # TODO
+        if self._is_running:
+            raise
+        self.ws = await websockets.connect(ws_addr)
+        asyncio.ensure_future(self._start_recv_loop())
         
     async def stop(self):
-        self._stopping = True
+        self._is_running = False
+        await asyncio.sleep(0)
     
     async def _start_recv_loop(self):
         while True:
-            if self._stopping:
+            if not self._is_running:
+                self.ws = None
                 break
             try:
                 msg = await self.ws.recv()
                 await self._accept(msg)
                 await asyncio.sleep(0)
-            except websockets.ConnectionClosed as exc:
-                raise TabConnectionClosed('Closed connection to tab: {0}'
-                                          .format(self._web_sock), exc)
+            except websockets.ConnectionClosed:
+                raise TabConnectionClosed('Closed connection to tab.')
             
     async def _accept(self, msg):
         try:
@@ -72,9 +75,8 @@ class Executor:
         :param recv_retry: is the max count the observe cycle passes.
         :return:
         """
-        if self._stopping:
-            raise TabConnectionClosed('Closed connection to tab: {0}'
-                                      .format(self._web_sock))
+        if not self.is_running:
+            raise TabConnectionClosed('Closed connection to tab.')
         
         msg_id = self._msg_id
         self._msg_id += 1

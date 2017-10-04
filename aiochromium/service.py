@@ -15,12 +15,11 @@ class ChromeTab:
     Wrapper for manage Chrome tab.
     """
     
-    def __init__(self, web_socket_url, tab_id, url, title):
-        self.web_socket_url = web_socket_url
+    def __init__(self, tab_id, url, title):
         self.tab_id = tab_id
         self.url = url
         self.title = title
-        self._command_executor = Executor(web_socket_url)
+        self._command_executor = Executor()
         
     @property
     async def document(self):
@@ -28,13 +27,13 @@ class ChromeTab:
         return WebElement(self, node['result']['root']['nodeId'], 'root')
     
     @classmethod
-    async def create(cls, ws_url, tab_id, url, title):
-        tab = cls(ws_url, tab_id, url, title)
-        await tab._create_connection()
+    async def create(cls, ws_addr, tab_id, url, title):
+        tab = cls(tab_id, url, title)
+        await tab.create_connection(ws_addr)
         return tab
     
-    async def _create_connection(self):
-        await self._command_executor.start()
+    async def create_connection(self, ws_addr):
+        await self._command_executor.run(ws_addr)
     
     async def execute(self, method, params=None):
         return await self._command_executor.execute(method, params)
@@ -52,7 +51,8 @@ class ChromeTab:
         return await self.execute(Page.RELOAD)
 
     async def close(self):
-        pass
+        if self._command_executor.is_running:
+            await self._command_executor.stop()
 
 
 class TabsIterator(AsyncIterator):
