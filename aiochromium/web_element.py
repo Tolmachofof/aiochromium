@@ -18,20 +18,20 @@ class WebElement:
     
     @property
     async def outer_html(self):
-        result = await self.chrome_tab._execute(DOM.GET_OUTER_HTML,
-                                                {'nodeId': self._id})
+        result = await self.chrome_tab.execute(DOM.GET_OUTER_HTML,
+                                               {'nodeId': self._id})
         return result['result']['outerHTML']
     
     @property
     async def text(self):
-        result = await  self.chrome_tab._execute('DOM.getAttributes',
-                                                 {'nodeId': self._id})
+        result = await  self.chrome_tab.execute('DOM.getAttributes',
+                                                {'nodeId': self._id})
         print(result)
         return result
     
     async def find_by_selector(self, selector):
-        result = await self.chrome_tab._execute('DOM.querySelector',
-                                                {'nodeId': self._id,
+        result = await self.chrome_tab.execute('DOM.querySelector',
+                                               {'nodeId': self._id,
                                                  'selector': selector})
         if 'params' in result:
             return WebElement(self.chrome_tab, result['params']['nodeId'],
@@ -41,8 +41,8 @@ class WebElement:
             pass
         
     async def set_attribute(self, name, value):
-        await self.chrome_tab._execute(DOM.SET_ATTRIBUTE,
-                                       {'nodeId': self._id,
+        await self.chrome_tab.execute(DOM.SET_ATTRIBUTE,
+                                      {'nodeId': self._id,
                                         'name': name,
                                         'value': value})
     

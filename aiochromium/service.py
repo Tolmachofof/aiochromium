@@ -20,11 +20,11 @@ class ChromeTab:
         self.tab_id = tab_id
         self.url = url
         self.title = title
-        self.command_executor = Executor(web_socket_url)
+        self._command_executor = Executor(web_socket_url)
         
     @property
     async def document(self):
-        node = await self._execute(DOM.GET_DOCUMENT)
+        node = await self.execute(DOM.GET_DOCUMENT)
         return WebElement(self, node['result']['root']['nodeId'], 'root')
     
     @classmethod
@@ -34,10 +34,10 @@ class ChromeTab:
         return tab
     
     async def _create_connection(self):
-        await self.command_executor.start()
+        await self._command_executor.start()
     
-    async def _execute(self, method, params=None):
-        return await self.command_executor.execute(method, params)
+    async def execute(self, method, params=None):
+        return await self._command_executor.execute(method, params)
 
     async def open(self, url):
         """
@@ -45,11 +45,11 @@ class ChromeTab:
         :param url: the page url that will be opened in current tab.
         :return: the WebElement instance.
         """
-        await self.command_executor.execute(Page.NAVIGATE, {'url': url})
+        await self.execute(Page.NAVIGATE, {'url': url})
         return await self.document
     
     async def reload(self):
-        return await self._execute(Page.RELOAD)
+        return await self.execute(Page.RELOAD)
 
     async def close(self):
         pass
@@ -57,13 +57,17 @@ class ChromeTab:
 
 class TabsIterator(AsyncIterator):
     
+    __slots__ = ('tabs', 'index')
+    
     def __init__(self, tabs):
         self.tabs = tabs
-        self._current_tab = 0
+        self.index = 0
         
     async def __anext__(self):
-        if self._current_tab < len(self.tabs):
-            return self.tabs[self._current_tab]
+        if self.index < len(self.tabs):
+            tab = self.tabs[self.index]
+            self.index += 1
+            return tab
         else:
             raise StopAsyncIteration
     
@@ -80,7 +84,16 @@ class RemoteChrome:
 
     @property
     async def tabs(self):
-        return await self._get_tabs()
+        tabs = []
+        for tab in await self._manage_tabs():
+            if tab['type'] == 'page':
+                tabs.append(await ChromeTab.create(
+                    tab['webSocketDebuggerUrl'],
+                    tab['id'],
+                    tab['url'],
+                    tab['title']
+                ))
+        return tuple(tabs)
     
     async def new_tab(self, url=None):
         tab = await self._manage_tabs(event='new')
@@ -95,20 +108,8 @@ class RemoteChrome:
             async with session.get(path) as resp:
                 return json.loads(await resp.text())
 
-    async def _get_tabs(self):
-        tabs = []
-        for tab in await self._manage_tabs():
-            if tab['type'] == 'page':
-                tabs.append(await ChromeTab.create(
-                    tab['webSocketDebuggerUrl'],
-                    tab['id'],
-                    tab['url'],
-                    tab['title']
-                ))
-        return tuple(tabs)
-
     async def __aiter__(self):
-        return TabsIterator(await self._get_tabs())
+        return TabsIterator(await self.tabs)
         
     def __str__(self):
         return 'Chrome browser is on http://{host}:{port}'\
