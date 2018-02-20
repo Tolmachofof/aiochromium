@@ -1,27 +1,29 @@
 
-import json
-import collections
 import asyncio
+import collections
+import functools
+import json
+
 import websockets
 
-from aiochromium.common import TabConnectionClosed
+from .common import TabConnectionClosed
 
 
-class MessagesStorage(collections.UserDict):
-    pass
+ChromeRequest = collections.namedtuple(
+    'ChromeRequest', ['id', 'method', 'params']
+)
 
 
 class Executor:
     
     RECV_TIMEOUT = 1
     
-    def __init__(self):
+    def __init__(self, loop=None):
         self._is_running = False
-        self._msg_id = 0
+        self._uid = 0
         self.ws = None
-        
-        self._pending_tasks = set()
-        self._accepted_tasks = {}
+        self._loop = loop if loop is not None else asyncio.get_event_loop()
+        self._pending_tasks = {}
         
     @property
     def is_running(self):
@@ -31,27 +33,22 @@ class Executor:
         """
         Connects to web socket and runs the messages receive loop.
         """
-        # TODO
-        if self._is_running:
-            raise
-        self.ws = await websockets.connect(ws_addr)
-        asyncio.ensure_future(self._start_recv_loop())
-        
-    async def stop(self):
-        self._is_running = False
-        await asyncio.sleep(0)
-    
-    async def _start_recv_loop(self):
-        while True:
-            if not self._is_running:
-                self.ws = None
-                break
+        if not self._is_running:
+            self._is_running = True
+            self.ws = await websockets.connect(ws_addr)
+            asyncio.ensure_future(self._start_recv())
+
+    async def _start_recv(self):
+        while self._is_running:
             try:
                 msg = await self.ws.recv()
                 await self._accept(msg)
                 await asyncio.sleep(0)
             except websockets.ConnectionClosed:
                 raise TabConnectionClosed('Closed connection to tab.')
+        
+    async def stop(self):
+        self._is_running = False
             
     async def _accept(self, msg):
         try:
@@ -59,12 +56,11 @@ class Executor:
             msg_id = msg['id']
             # ignore message if nobody waits it.
             if msg_id in self._pending_tasks:
-                self._pending_tasks.remove(msg_id)
-                self._accepted_tasks[msg_id] = msg
+                self._pending_tasks[msg_id].set_result(msg)
         except Exception:
             pass
              
-    async def execute(self, method, params=None, recv_retry=10):
+    async def execute(self, method, params=None):
         """
         Execute command in chrome tab.
         This method sends command to the chrome tab and starts
@@ -72,29 +68,27 @@ class Executor:
         if result hasn't been accepted.
         :param method:
         :param params:
-        :param recv_retry: is the max count the observe cycle passes.
         :return:
         """
         if not self.is_running:
             raise TabConnectionClosed('Closed connection to tab.')
-        
-        msg_id = self._msg_id
-        self._msg_id += 1
-        args = {
-            'id': msg_id,
-            'method': method,
-            'params': params
-        }
-        self._pending_tasks.add(msg_id)
-        await self.ws.send(json.dumps(args))
-        
-        # See accepted tasks while the message with msg_id hasn't been accepted
-        # or recv_retry != 0
-        while recv_retry:
-            recv_retry -= 1
-            result = self._accepted_tasks.get(msg_id)
-            if result:
-                return result
-            await asyncio.sleep(1)
-        # TODO
-        raise Exception
+        task_uid = self._create_uid()
+        task = self._create_pending_task(task_uid)
+        self._pending_tasks[task_uid] = task
+        await self.ws.send(json.dumps(ChromeRequest(task_uid, method, params)))
+        return task
+
+    def _create_uid(self):
+        self._uid += 1
+        return self._uid
+
+    def _create_pending_task(self, task_uid):
+        task = self._loop.create_future()
+        self._pending_tasks[task_uid] = task
+        task.add_done_callback(
+            functools.partial(self._on_task_done, task_uid)
+        )
+        return task
+
+    def _on_task_done(self, task_uid, future):
+        self._pending_tasks.pop(task_uid)
