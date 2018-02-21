@@ -42,6 +42,7 @@ class Executor:
         while self._is_running:
             try:
                 msg = await self.ws.recv()
+                print(msg)
                 await self._accept(msg)
                 await asyncio.sleep(0)
             except websockets.ConnectionClosed:
@@ -60,7 +61,7 @@ class Executor:
         except Exception:
             pass
              
-    async def execute(self, method, params=None):
+    async def execute(self, frame):
         """
         Execute command in chrome tab.
         This method sends command to the chrome tab and starts
@@ -75,8 +76,16 @@ class Executor:
         task_uid = self._create_uid()
         task = self._create_pending_task(task_uid)
         self._pending_tasks[task_uid] = task
-        await self.ws.send(json.dumps(ChromeRequest(task_uid, method, params)))
-        return task
+        await self.ws.send(
+            json.dumps(
+                {
+                    'id': task_uid,
+                    'method': frame.method,
+                    'params': frame.params
+                }
+            )
+        )
+        return await task
 
     def _create_uid(self):
         self._uid += 1
