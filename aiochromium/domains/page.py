@@ -1,20 +1,4 @@
-import json
-import collections
-
-
-RequestFrame = collections.namedtuple('RequestFrame', ['method', 'params'])
-
-
-class Domain:
-
-    @staticmethod
-    def create_frame(method, params=None):
-        if params is not None:
-            params = dict(
-                (param, value)
-                for param, value in params.items() if value is not None
-            )
-        return RequestFrame(method, params)
+from .base import Domain, RequestFrame
 
 
 class Page(Domain):
@@ -61,9 +45,3 @@ class Page(Domain):
             cls._FRAME_STOPPED_LOADING, {'frameId': frame_id}
         )
 
-
-class DOM:
-
-    GET_DOCUMENT = 'DOM.getDocument'
-    GET_OUTER_HTML = 'DOM.getOuterHTML'
-    SET_ATTRIBUTE = 'DOM.setAttributeValue'
