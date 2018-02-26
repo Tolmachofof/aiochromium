@@ -74,4 +74,3 @@ class Page(Domain):
         return cls.create_frame(
             cls._FRAME_STOPPED_LOADING, {'frameId': frame_id}
         )
-
