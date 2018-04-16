@@ -1,13 +1,14 @@
 
+import base64
 import json
 from collections import AsyncIterator
 import asyncio
 import aiohttp
 
-from .web_element import WebElement
-from .common import ErrorProcessor
-from .executor import Executor
-from .domains import Page, DOM
+#from aiochromium.web_element import WebElement
+from aiochromium.common import ErrorProcessor
+from aiochromium.executor import Executor
+from aiochromium.domains import Page
 
 
 class ChromeTab:
@@ -15,16 +16,16 @@ class ChromeTab:
     Wrapper for manage Chrome tab.
     """
     
-    def __init__(self, tab_id, url, title):
-        self.tab_id = tab_id
+    def __init__(self, tab_uid, url, title):
+        self.tab_uid = tab_uid
         self.url = url
         self.title = title
         self._command_executor = Executor()
         
-    @property
-    async def document(self):
-        node = await self.execute(DOM.GET_DOCUMENT)
-        return WebElement(self, node['result']['root']['nodeId'], 'root')
+    # @property
+    # async def document(self):
+    #     node = await self.execute(DOM.GET_DOCUMENT)
+    #     return WebElement(self, node['result']['root']['nodeId'], 'root')
     
     @classmethod
     async def create(cls, ws_addr, tab_id, url, title):
@@ -34,9 +35,15 @@ class ChromeTab:
     
     async def create_connection(self, ws_addr):
         await self._command_executor.run(ws_addr)
-    
-    async def execute(self, method, params=None):
-        return await self._command_executor.execute(method, params)
+
+    async def take_screenshot(
+        self, output, format='png', quality=None, clip=None, from_surface=True
+    ):
+        params = {}
+        data = await self._command_executor.execute(Page.SCREENSHOT, )
+
+    async def execute(self, frame):
+        return await self._command_executor.execute(frame)
 
     async def open(self, url):
         """
@@ -44,11 +51,12 @@ class ChromeTab:
         :param url: the page url that will be opened in current tab.
         :return: the WebElement instance.
         """
-        await self.execute(Page.NAVIGATE, {'url': url})
-        return await self.document
+        result = await self.execute(Page.navigate(url))
+        frame_id = result['frameId']
+        await self.execute(Page.frame_stopped_loading(frame_id))
     
     async def reload(self):
-        return await self.execute(Page.RELOAD)
+        return await self.execute(Page.reload())
 
     async def close(self):
         if self._command_executor.is_running:
@@ -72,7 +80,7 @@ class TabsIterator(AsyncIterator):
             raise StopAsyncIteration
     
 
-class RemoteChrome:
+class Chrome:
     """
     Base class for connect and manage Google Chrome browser
     with remote debugging interface.
@@ -81,24 +89,20 @@ class RemoteChrome:
     def __init__(self, host, port):
         self.host = host
         self.port = port
+        self._tabs = []
 
     @property
     async def tabs(self):
-        tabs = []
-        for tab in await self._manage_tabs():
-            if tab['type'] == 'page':
-                tabs.append(await ChromeTab.create(
-                    tab['webSocketDebuggerUrl'],
-                    tab['id'],
-                    tab['url'],
-                    tab['title']
-                ))
-        return tuple(tabs)
+        return tuple(self._tabs)
     
-    async def new_tab(self, url=None):
-        tab = await self._manage_tabs(event='new')
-        return await ChromeTab.create(tab['webSocketDebuggerUrl'], tab['id'],
-                                      tab['url'], tab['title'])
+    async def new_tab(self):
+        tab_info = await self._manage_tabs(event='new')
+        new_tab = await ChromeTab.create(
+            tab_info['webSocketDebuggerUrl'], tab_info['id'],
+            tab_info['url'], tab_info['title']
+        )
+        self._tabs.append(new_tab)
+        return new_tab
 
     async def _manage_tabs(self, event=None):
         event = '/' + event if event is not None else ''
@@ -118,21 +122,23 @@ class RemoteChrome:
     def __repr__(self):
         return 'RemoteChrome({host}, {port})'.format(host=self.host,
                                                      port=self.port)
+from aiochromium.domains.dom import DOM
+
+async def run_tab(chrome):
+    tab = await chrome.new_tab()
+    await tab.execute(Page.navigate('http://google.com'))
+    await asyncio.sleep(1)
+    await tab.execute(Page.navigate('http://yandex.ru'))
+    print(await tab.execute(DOM.get_document()))
+
+async def main():
+    chrome = Chrome('127.0.0.1', 9222)
+    await asyncio.wait(
+        [run_tab(chrome) for _ in range(1)]
+    )
 
 
-class LocalChrome(RemoteChrome):
-    """
-    Base class for manage local Google Chrome browser.
-    """
-    
-    def __init__(self, port, args):
-        super().__init__(host='localhost', port=port)
-        
-    async def start(self):
-        pass
-    
-    async def stop(self):
-        tabs = await self.tabs
 
-
-
+l = asyncio.get_event_loop()
+l.create_task(main())
+l.run_forever()

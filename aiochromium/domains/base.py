@@ -1,3 +1,4 @@
+import abc
 import collections
 
 
@@ -14,3 +15,10 @@ class Domain:
                 for param, value in params.items() if value is not None
             )
         return RequestFrame(method, params)
+
+
+class BaseType(metaclass=abc.ABCMeta):
+
+    @abc.abstractmethod
+    def from_response(self, response_obj):
+        raise NotImplementedError

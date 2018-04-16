@@ -57,10 +57,14 @@ class Executor:
             msg_id = msg['id']
             # ignore message if nobody waits it.
             if msg_id in self._pending_tasks:
+                self._check_errors(msg)
                 self._pending_tasks[msg_id].set_result(msg)
         except Exception:
             pass
-             
+
+    def _check_errors(self, message):
+        pass
+
     async def execute(self, frame):
         """
         Execute command in chrome tab.
