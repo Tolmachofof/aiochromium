@@ -126,10 +126,13 @@ from aiochromium.domains.dom import DOM
 
 async def run_tab(chrome):
     tab = await chrome.new_tab()
-    await tab.execute(Page.navigate('http://google.com'))
-    await asyncio.sleep(1)
     await tab.execute(Page.navigate('http://yandex.ru'))
     print(await tab.execute(DOM.get_document()))
+    n = await tab.execute(DOM.query_selector(3, 'div'))
+    print(n)
+    print(await n.get_attributes())
+    print(await n.query_selector_all('div'))
+    print(await tab.execute(DOM.get_outer_html(3)))
 
 async def main():
     chrome = Chrome('127.0.0.1', 9222)

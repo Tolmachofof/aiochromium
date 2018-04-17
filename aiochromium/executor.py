@@ -14,6 +14,11 @@ ChromeRequest = collections.namedtuple(
 )
 
 
+Task = collections.namedtuple(
+    'Task', ['future', 'wrapper_class']
+)
+
+
 class Executor:
     
     RECV_TIMEOUT = 1
@@ -24,6 +29,7 @@ class Executor:
         self.ws = None
         self._loop = loop if loop is not None else asyncio.get_event_loop()
         self._pending_tasks = {}
+        self._wrappers = {}
         
     @property
     def is_running(self):
@@ -41,29 +47,13 @@ class Executor:
     async def _start_recv(self):
         while self._is_running:
             try:
-                msg = await self.ws.recv()
-                print(msg)
-                await self._accept(msg)
-                await asyncio.sleep(0)
+                response = await self.ws.recv()
+                await self._accept(response)
             except websockets.ConnectionClosed:
                 raise TabConnectionClosed('Closed connection to tab.')
         
     async def stop(self):
         self._is_running = False
-            
-    async def _accept(self, msg):
-        try:
-            msg = json.loads(msg)
-            msg_id = msg['id']
-            # ignore message if nobody waits it.
-            if msg_id in self._pending_tasks:
-                self._check_errors(msg)
-                self._pending_tasks[msg_id].set_result(msg)
-        except Exception:
-            pass
-
-    def _check_errors(self, message):
-        pass
 
     async def execute(self, frame):
         """
@@ -78,18 +68,42 @@ class Executor:
         if not self.is_running:
             raise TabConnectionClosed('Closed connection to tab.')
         task_uid = self._create_uid()
-        task = self._create_pending_task(task_uid)
-        self._pending_tasks[task_uid] = task
+        task_future = self._create_pending_task(task_uid)
+        self._pending_tasks[task_uid] = Task(
+            task_future, frame.domain_method.wrapper_class,
+        )
         await self.ws.send(
             json.dumps(
                 {
                     'id': task_uid,
-                    'method': frame.method,
+                    'method': frame.domain_method.method,
                     'params': frame.params
                 }
             )
         )
-        return await task
+        return await task_future
+
+    async def _accept(self, response):
+        try:
+            response = json.loads(response)
+            response_id = response['id']
+            # ignore message if nobody waits it.
+            if response_id in self._pending_tasks:
+                self._check_errors(response)
+                if self._pending_tasks[response_id].wrapper_class is not None:
+                    response = self._wrap_result(
+                        response,
+                        self._pending_tasks[response_id].wrapper_class
+                    )
+                self._pending_tasks[response_id].future.set_result(response)
+        except Exception:
+            pass
+
+    def _check_errors(self, message):
+        pass
+
+    def _wrap_result(self, msg, wrapper_class):
+        return wrapper_class.from_response(self, msg['result'])
 
     def _create_uid(self):
         self._uid += 1

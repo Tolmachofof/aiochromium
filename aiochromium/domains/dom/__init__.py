@@ -1,1 +1,1 @@
-from .base import DOM
+from .dom_base import DOM

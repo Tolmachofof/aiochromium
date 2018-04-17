@@ -1,29 +1,31 @@
-from ..base import Domain
+from ..base import Domain, DomainMethod
+from . import dom_types
 
 
 class DOM(Domain):
 
-    _ENABLE = 'DOM.enable'
-    _DISABLE = 'DOM.disable'
-    _GET_DOCUMENT = 'DOM.getDocument'
-    _REQUEST_CHILD_NODES = 'DOM.requestChildNodes'
-    _QUERY_SELECTOR = 'DOM.querySelector'
-    _QUERY_SELECTOR_ALL = 'DOM.querySelectorAll'
-    _SET_NODE_NAME = 'DOM.setNodeName'
-    _SET_NODE_VALUE = 'DOM.setNodeValue'
-    _REMOVE_NODE = 'DOM.removeNode'
-    _SET_ATTRIBUTE_VALUE = 'DOM.setAttributeValue'
-    _SET_ATTRIBUTES_AS_TEXT = 'DOM.setAttributesAsText'
-    _REMOVE_ATTRIBUTE = 'DOM.removeAttribute'
-    _GET_OUTER_HTML = 'DOM.getOuterHTML'
-    _SET_OUTER_HTML = 'DOM.setOuterHTML'
-    _REQUEST_NODE = 'DOM.requestNode'
-    _HIGHLIGHT_RECT = 'DOM.highlightRect'
-    _HIGHLIGHT_NODE = 'DOM.highlightNode'
-    _HIDE_HIGHLIGHT = 'DOM.hideHighlight'
-    _RESOLVE_NODE = 'DOM.resolveNode'
-    _GET_ATTRIBUTES = 'DOM.getAttributes'
-    _MOVE_TO = 'DOM.moveTo'
+    # Method, result wrapper_class, many
+    _ENABLE = DomainMethod('DOM.enable', None)
+    _DISABLE = DomainMethod('DOM.disable', None)
+    _GET_DOCUMENT = DomainMethod('DOM.getDocument', dom_types.Node)
+    _REQUEST_CHILD_NODES = DomainMethod('DOM.requestChildNodes', None)
+    _QUERY_SELECTOR = DomainMethod('DOM.querySelector', dom_types.Node)
+    _QUERY_SELECTOR_ALL = DomainMethod('DOM.querySelectorAll', dom_types.Node)
+    _SET_NODE_NAME = DomainMethod('DOM.setNodeName', dom_types.Node)
+    _SET_NODE_VALUE = DomainMethod('DOM.setNodeValue', None)
+    _REMOVE_NODE = DomainMethod('DOM.removeNode', None)
+    _SET_ATTRIBUTE_VALUE = DomainMethod('DOM.setAttributeValue', None)
+    _SET_ATTRIBUTES_AS_TEXT = DomainMethod('DOM.setAttributesAsText', None)
+    _REMOVE_ATTRIBUTE = DomainMethod('DOM.removeAttribute', None)
+    _GET_OUTER_HTML = DomainMethod('DOM.getOuterHTML', dom_types.OuterHTML)
+    _SET_OUTER_HTML = DomainMethod('DOM.setOuterHTML', None)
+    _REQUEST_NODE = DomainMethod('DOM.requestNode', dom_types.Node)
+    _HIGHLIGHT_RECT = DomainMethod('DOM.highlightRect', None)
+    _HIGHLIGHT_NODE = DomainMethod('DOM.highlightNode', None)
+    _HIDE_HIGHLIGHT = DomainMethod('DOM.hideHighlight', None)
+    _RESOLVE_NODE = DomainMethod('DOM.resolveNode', None)
+    _GET_ATTRIBUTES = DomainMethod('DOM.getAttributes', dom_types.Attributes)
+    _MOVE_TO = DomainMethod('DOM.moveTo', None)
 
     @classmethod
     def enable(cls):
