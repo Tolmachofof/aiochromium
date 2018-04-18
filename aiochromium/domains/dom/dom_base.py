@@ -5,8 +5,13 @@ from . import dom_types
 class DOM(Domain):
 
     # Method, result wrapper_class, many
+    _DESCRIBE_NODE = ('DOM.describeNode', dom_types.Node)
     _ENABLE = DomainMethod('DOM.enable', None)
     _DISABLE = DomainMethod('DOM.disable', None)
+    _FOCUS = DomainMethod('DOM.focus', None)
+    _GET_BOX_MODEL = DomainMethod('DOM.getBoxModel', None)
+    _GET_FLATTENED_DOCUMENT = DomainMethod('DOM.getFlattenedDocument', None)
+    _SET_FILE_INPUT_FILES = DomainMethod('DOM.setFileInputFiles', None)
     _GET_DOCUMENT = DomainMethod('DOM.getDocument', dom_types.Node)
     _REQUEST_CHILD_NODES = DomainMethod('DOM.requestChildNodes', None)
     _QUERY_SELECTOR = DomainMethod('DOM.querySelector', dom_types.Node)
