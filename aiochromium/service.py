@@ -132,7 +132,7 @@ async def run_tab(chrome):
     print(n)
     print(await n.get_attributes())
     print(await n.query_selector_all('div'))
-    print(await tab.execute(DOM.get_outer_html(3)))
+    print(await n.get_outer_html())
 
 async def main():
     chrome = Chrome('127.0.0.1', 9222)

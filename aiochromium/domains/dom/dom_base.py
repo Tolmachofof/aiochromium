@@ -4,8 +4,7 @@ from . import dom_types
 
 class DOM(Domain):
 
-    # Method, result wrapper_class, many
-    _DESCRIBE_NODE = ('DOM.describeNode', dom_types.Node)
+    _DESCRIBE_NODE = DomainMethod('DOM.describeNode', dom_types.Node)
     _ENABLE = DomainMethod('DOM.enable', None)
     _DISABLE = DomainMethod('DOM.disable', None)
     _FOCUS = DomainMethod('DOM.focus', None)

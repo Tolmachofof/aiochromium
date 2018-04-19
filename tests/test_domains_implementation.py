@@ -27,3 +27,4 @@ def test_dom_domain_implements_all_commands(dom_protocol):
         dom_attribute_name = get_domain_attribute_name(command['name'])
         assert hasattr(DOM, dom_attribute_name)
         assert getattr(DOM, dom_attribute_name)[0] == 'DOM.' + command['name']
+        assert hasattr(DOM, convert_to_snake_case(command['name']))

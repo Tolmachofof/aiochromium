@@ -16,3 +16,10 @@ def dom_protocol(protocol):
     return list(
         filter(lambda domain: domain['domain'] == 'DOM', protocol['domains'])
     )[0]
+
+
+@pytest.fixture
+def page_protocol(protocol):
+    return list(
+        filter(lambda domain: domain['domain'] == 'Page', protocol['domains'])
+    )[0]
