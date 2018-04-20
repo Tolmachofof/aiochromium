@@ -1,4 +1,3 @@
-
 import asyncio
 import collections
 import functools
@@ -70,13 +69,13 @@ class Executor:
         task_uid = self._create_uid()
         task_future = self._create_pending_task(task_uid)
         self._pending_tasks[task_uid] = Task(
-            task_future, frame.domain_method.wrapper_class,
+            task_future, frame.wrapper_class,
         )
         await self.ws.send(
             json.dumps(
                 {
                     'id': task_uid,
-                    'method': frame.domain_method.method,
+                    'method': frame.domain_method,
                     'params': frame.params
                 }
             )

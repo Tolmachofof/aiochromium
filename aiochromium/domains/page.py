@@ -1,12 +1,12 @@
-from .base import Domain, DomainMethod
+from .base import Domain
 
 
 class Page(Domain):
 
-    _ENABLE = DomainMethod('Page.enable', None)
-    _DISABLE = DomainMethod('Page.disable', None)
-    _NAVIGATE = DomainMethod('Page.navigate', None)
-    _RELOAD = DomainMethod('Page.reload', None)
+    _ENABLE = 'Page.enable'
+    _DISABLE = 'Page.disable'
+    _NAVIGATE = 'Page.navigate'
+    _RELOAD = 'Page.reload'
     _SET_GEOLOCATION_OVERRIDE = 'Page.setGeolocationOverride'
     _CLEAR_GEOLOCATION_OVERRIDE = 'Page.clearGeolocationOverride'
     _HANDLE_JAVASCRIPT_DIALOG = 'Page.handleJavaScriptDialog'

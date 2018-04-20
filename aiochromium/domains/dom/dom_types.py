@@ -23,6 +23,16 @@ class BackendNodeId(BaseType):
             return [int(node_id) for node_id in response_obj['nodeIds']]
 
 
+class BoxModel(BaseType):
+    pass
+
+
+    @classmethod
+    def from_response(cls, response_obj):
+        if 'boxModel' in response_obj:
+            return response_obj['boxModel']
+
+
 class BackendNode(BaseType):
 
     def __init__(self, node_type, node_name, backend_node_id):

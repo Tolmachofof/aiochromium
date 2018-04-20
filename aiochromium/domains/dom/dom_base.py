@@ -1,56 +1,151 @@
-from ..base import Domain, DomainMethod
-from . import dom_types
+from functools import partial
+
+from ..base import Array, Domain, String, Integer
+from .dom_types import (
+    BoxModel, Node, NodeId
+)
 
 
 class DOM(Domain):
 
-    _DESCRIBE_NODE = DomainMethod('DOM.describeNode', dom_types.Node)
-    _ENABLE = DomainMethod('DOM.enable', None)
-    _DISABLE = DomainMethod('DOM.disable', None)
-    _FOCUS = DomainMethod('DOM.focus', None)
-    _GET_BOX_MODEL = DomainMethod('DOM.getBoxModel', None)
-    _GET_FLATTENED_DOCUMENT = DomainMethod('DOM.getFlattenedDocument', None)
-    _SET_FILE_INPUT_FILES = DomainMethod('DOM.setFileInputFiles', None)
-    _GET_DOCUMENT = DomainMethod('DOM.getDocument', dom_types.Node)
-    _REQUEST_CHILD_NODES = DomainMethod('DOM.requestChildNodes', None)
-    _QUERY_SELECTOR = DomainMethod('DOM.querySelector', dom_types.Node)
-    _QUERY_SELECTOR_ALL = DomainMethod('DOM.querySelectorAll', dom_types.Node)
-    _SET_NODE_NAME = DomainMethod('DOM.setNodeName', dom_types.Node)
-    _SET_NODE_VALUE = DomainMethod('DOM.setNodeValue', None)
-    _REMOVE_NODE = DomainMethod('DOM.removeNode', None)
-    _SET_ATTRIBUTE_VALUE = DomainMethod('DOM.setAttributeValue', None)
-    _SET_ATTRIBUTES_AS_TEXT = DomainMethod('DOM.setAttributesAsText', None)
-    _REMOVE_ATTRIBUTE = DomainMethod('DOM.removeAttribute', None)
-    _GET_OUTER_HTML = DomainMethod('DOM.getOuterHTML', dom_types.OuterHTML)
-    _SET_OUTER_HTML = DomainMethod('DOM.setOuterHTML', None)
-    _REQUEST_NODE = DomainMethod('DOM.requestNode', dom_types.Node)
-    _HIGHLIGHT_RECT = DomainMethod('DOM.highlightRect', None)
-    _HIGHLIGHT_NODE = DomainMethod('DOM.highlightNode', None)
-    _HIDE_HIGHLIGHT = DomainMethod('DOM.hideHighlight', None)
-    _RESOLVE_NODE = DomainMethod('DOM.resolveNode', None)
-    _GET_ATTRIBUTES = DomainMethod('DOM.getAttributes', dom_types.Attributes)
-    _MOVE_TO = DomainMethod('DOM.moveTo', None)
+    _DESCRIBE_NODE = 'DOM.describeNode'
+    _DISABLE = 'DOM.disable'
+    _ENABLE = 'DOM.enable'
+    _FOCUS = 'DOM.focus'
+    _GET_ATTRIBUTES = 'DOM.getAttributes'
+    _GET_BOX_MODEL = 'DOM.getBoxModel'
+    _GET_DOCUMENT = 'DOM.getDocument'
+    _GET_FLATTENED_DOCUMENT = 'DOM.getFlattenedDocument'
+    _GET_OUTER_HTML = 'DOM.getOuterHTML'
+    _HIDE_HIGHLIGHT = 'DOM.hideHighlight'
+    _HIGHLIGHT_NODE = 'DOM.highlightNode'
+    _HIGHLIGHT_RECT = 'DOM.highlightRect'
+    _MOVE_TO = 'DOM.moveTo'
+    _QUERY_SELECTOR = 'DOM.querySelector'
+    _QUERY_SELECTOR_ALL = 'DOM.querySelectorAll'
+    _REMOVE_ATTRIBUTE = 'DOM.removeAttribute'
+    _REMOVE_NODE = 'DOM.removeNode'
+    _REQUEST_CHILD_NODES = 'DOM.requestChildNodes'
+    _REQUEST_NODE = 'DOM.requestNode'
+    _RESOLVE_NODE = 'DOM.resolveNode'
+    _SET_ATTRIBUTE_VALUE = 'DOM.setAttributeValue'
+    _SET_ATTRIBUTES_AS_TEXT = 'DOM.setAttributesAsText'
+    _SET_FILE_INPUT_FILES = 'DOM.setFileInputFiles'
+    _SET_NODE_NAME = 'DOM.setNodeName'
+    _SET_NODE_VALUE = 'DOM.setNodeValue'
+    _SET_OUTER_HTML = 'DOM.setOuterHTML'
 
     @classmethod
-    def enable(cls):
-        return cls.create_frame(cls._ENABLE)
+    def describe_node(
+        cls, node_id=None, backend_node_id=None, object_id=None, depth=None,
+        pierce=None
+    ):
+        return cls.create_frame(
+            cls._DESCRIBE_NODE,
+            {
+                'nodeId': node_id,
+                'backendNodeId': backend_node_id,
+                'objectId': object_id,
+                'depth': depth,
+                'pierce': pierce
+            },
+            wrapper_class=partial(Node, source='nodeId')
+        )
 
     @classmethod
     def disable(cls):
         return cls.create_frame(cls._DISABLE)
 
     @classmethod
-    def get_document(cls):
-        return cls.create_frame(cls._GET_DOCUMENT)
+    def enable(cls):
+        return cls.create_frame(cls._ENABLE)
 
     @classmethod
-    def request_child_nodes(cls, node_id, depth=None):
+    def focus(cls, node_id=None, backend_node_id=None, object_id=None):
         return cls.create_frame(
-            cls._REQUEST_CHILD_NODES,
+            cls._FOCUS,
             {
                 'nodeId': node_id,
-                'depth': depth
+                'backendNodeId': backend_node_id,
+                'objectId': object_id
             }
+        )
+
+    @classmethod
+    def get_attributes(cls, node_id):
+        return cls.create_frame(
+            cls._GET_ATTRIBUTES,
+            {
+                'nodeId': node_id
+            },
+            wrapper_class=partial(Array, source='attributes', target=String)
+        )
+
+    @classmethod
+    def get_box_model(cls, node_id=None, backend_node_id=None, object_id=None):
+        return cls.create_frame(
+            cls._GET_BOX_MODEL,
+            {
+                'nodeId': node_id,
+                'backendNodeId': backend_node_id,
+                'objectId': object_id
+            },
+            wrapper_class=partial(BoxModel, source='boxModel')
+        )
+
+    @classmethod
+    def get_document(cls):
+        return cls.create_frame(
+            cls._GET_DOCUMENT, wrapper_class=partial(Node, source='root')
+        )
+
+    @classmethod
+    def get_flattened_document(cls, depth=None, pierce=None):
+        return cls.create_frame(
+            cls._GET_FLATTENED_DOCUMENT,
+            {
+                'depth': depth,
+                'pierce': pierce
+            },
+            wrapper_class=partial(Array, source='nodes', target=Node)
+        )
+
+    @classmethod
+    def get_outer_html(
+        cls, node_id=None, backend_node_id=None, object_id=None
+    ):
+        return cls.create_frame(
+            cls._GET_OUTER_HTML,
+            {
+                'nodeId': node_id,
+                'backendNodeId': backend_node_id,
+                'objectId': object_id
+            },
+            wrapper_class=partial(String, source='outerHTML')
+        )
+
+    @classmethod
+    def hide_highlight(cls):
+        return cls.create_frame(cls._HIDE_HIGHLIGHT)
+
+    @classmethod
+    def highlight_node(cls):
+        return cls.create_frame(cls._HIGHLIGHT_NODE)
+
+    @classmethod
+    def highlight_rect(cls):
+        return cls.create_frame(cls._HIGHLIGHT_RECT)
+
+    @classmethod
+    def move_to(cls, node_id, target_node_id, insert_before_node_id=None):
+        return cls.create_frame(
+            cls._MOVE_TO,
+            {
+                'nodeId': node_id,
+                'targetNodeId': target_node_id,
+                'insertBeforeNodeId': insert_before_node_id
+            },
+            wrapper_class=partial(NodeId, source='nodeId')
         )
 
     @classmethod
@@ -60,7 +155,8 @@ class DOM(Domain):
             {
                 'nodeId': node_id,
                 'selector': selector
-            }
+            },
+            wrapper_class=partial(NodeId, source='nodeId')
         )
 
     @classmethod
@@ -70,13 +166,14 @@ class DOM(Domain):
             {
                 'nodeId': node_id,
                 'selector': selector
-            }
+            },
+            wrapper_class=partial(Array, source='nodeIds', target=NodeId)
         )
 
     @classmethod
-    def set_node_name(cls, node_id, name):
+    def remove_attribute(cls, node_id, name):
         return cls.create_frame(
-            cls._SET_NODE_NAME,
+            cls._REMOVE_ATTRIBUTE,
             {
                 'nodeId': node_id,
                 'name': name
@@ -84,18 +181,38 @@ class DOM(Domain):
         )
 
     @classmethod
-    def set_node_value(cls, node_id, value):
+    def remove_node(cls, node_id):
+        return cls.create_frame(cls._REMOVE_NODE, {'nodeId': node_id})
+
+
+    @classmethod
+    def request_child_nodes(cls, node_id, depth=None, pierce=None):
         return cls.create_frame(
-            cls._SET_NODE_VALUE,
+            cls._REQUEST_CHILD_NODES,
             {
                 'nodeId': node_id,
-                'value': value
+                'depth': depth,
+                'pierce': pierce
             }
         )
 
     @classmethod
-    def remove_node(cls, node_id):
-        return cls.create_frame(cls._REMOVE_NODE, {'nodeId': node_id})
+    def request_node(cls, object_id):
+        return cls.create_frame(
+            cls._REQUEST_NODE, {'objectId': object_id},
+            wrapper_class=partial(NodeId, source='nodeId')
+        )
+
+    # TODO
+    @classmethod
+    def resolve_node(cls, node_id, object_group=None):
+        return cls.create_frame(
+            cls._RESOLVE_NODE,
+            {
+                'node_id': node_id,
+                'objectGroup': object_group
+            }
+        )
 
     @classmethod
     def set_attribute_value(cls, node_id, name, value):
@@ -120,9 +237,23 @@ class DOM(Domain):
         )
 
     @classmethod
-    def remove_attribute(cls, node_id, name):
+    def set_file_input_files(
+        cls, files, node_id=None, backend_node_id=None, object_id=None
+    ):
         return cls.create_frame(
-            cls._REMOVE_ATTRIBUTE,
+            cls._SET_FILE_INPUT_FILES,
+            {
+                'files': files,
+                'nodeId': node_id,
+                'backendNodeId': backend_node_id,
+                'objectId': object_id
+            }
+        )
+
+    @classmethod
+    def set_node_name(cls, node_id, name):
+        return cls.create_frame(
+            cls._SET_NODE_NAME,
             {
                 'nodeId': node_id,
                 'name': name
@@ -130,8 +261,14 @@ class DOM(Domain):
         )
 
     @classmethod
-    def get_outer_html(cls, node_id):
-        return cls.create_frame(cls._GET_OUTER_HTML, {'nodeId': node_id})
+    def set_node_value(cls, node_id, value):
+        return cls.create_frame(
+            cls._SET_NODE_VALUE,
+            {
+                'nodeId': node_id,
+                'value': value
+            }
+        )
 
     @classmethod
     def set_outer_html(cls, node_id, outer_html):
@@ -140,69 +277,5 @@ class DOM(Domain):
             {
                 'nodeId': node_id,
                 'outerHTML': outer_html
-            }
-        )
-
-    @classmethod
-    def request_node(cls, object_id):
-        return cls.create_frame(cls._REQUEST_NODE,{'objectId': object_id})
-
-    @classmethod
-    def highlight_rect(
-        cls, x, y, width, height, color=None, outline_color=None
-    ):
-        return cls.create_frame(
-            cls._HIGHLIGHT_RECT,
-            {
-                'x': x,
-                'y': y,
-                'width': width,
-                'height': height,
-                'color': color,
-                'outlineColor': outline_color
-            }
-        )
-
-    @classmethod
-    def highlight_node(
-        cls, highlight_config, node_id=None, backend_node_id=None,
-        object_id=None
-    ):
-        return cls.create_frame(
-            cls._HIGHLIGHT_NODE,
-            {
-                'highlightConfig': highlight_config,
-                'nodeId': node_id,
-                'backendNodeId': backend_node_id,
-                'objectId': object_id
-            }
-        )
-
-    @classmethod
-    def hide_highlight(cls):
-        return cls.create_frame(cls._HIDE_HIGHLIGHT)
-
-    @classmethod
-    def resolve_node(cls, node_id, object_group=None):
-        return cls.create_frame(
-            cls._RESOLVE_NODE,
-            {
-                'node_id': node_id,
-                'objectGroup': object_group
-            }
-        )
-
-    @classmethod
-    def get_attributes(cls, node_id):
-        return cls.create_frame(cls._GET_ATTRIBUTES, {'nodeId': node_id})
-
-    @classmethod
-    def move_to(cls, node_id, target_node_id, insert_before_node_id=None):
-        return cls.create_frame(
-            cls._MOVE_TO,
-            {
-                'nodeId': node_id,
-                'targetNodeId': target_node_id,
-                'insertBeforeNodeId': insert_before_node_id
             }
         )

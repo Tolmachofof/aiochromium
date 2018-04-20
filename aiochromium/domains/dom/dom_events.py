@@ -1,11 +1,11 @@
-from ..base import Domain, DomainMethod
+from ..base import Domain
 
 
 class DOMEvents(Domain):
 
-    _ATTRIBUTE_MODIFIED = DomainMethod('DOM.attributeModified', None)
-    _ATTRIBUTE_REMOVED = DomainMethod('DOM.attributeRemoved', None)
-    _CHARACTER_DATA_MODIFIED = DomainMethod('DOM.characterDataModified', None)
+    _ATTRIBUTE_MODIFIED = 'DOM.attributeModified'
+    _ATTRIBUTE_REMOVED = 'DOM.attributeRemoved'
+    _CHARACTER_DATA_MODIFIED = 'DOM.characterDataModified'
     _CHILD_NODE_COUNT_UPDATED = 'DOM.childNodeCountUpdated'
     _CHILD_NODE_INSERTED = 'DOM.childNodeInserted'
     _CHILD_NODE_REMOVED = 'DOM.childNodeRemoved'
