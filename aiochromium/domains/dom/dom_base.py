@@ -1,12 +1,8 @@
-from functools import partial
-
-from ..base import Array, Domain, String, Integer
-from .dom_types import (
-    BoxModel, Node, NodeId
-)
+from ..base import Array, BaseDomain, String, Integer
+from .dom_types import BoxModel, Node
 
 
-class DOM(Domain):
+class DOM(BaseDomain):
 
     _DESCRIBE_NODE = 'DOM.describeNode'
     _DISABLE = 'DOM.disable'
@@ -49,7 +45,8 @@ class DOM(Domain):
                 'depth': depth,
                 'pierce': pierce
             },
-            wrapper_class=partial(Node, source='nodeId')
+            wrapper_class=Node,
+            source='nodeId'
         )
 
     @classmethod
@@ -78,7 +75,9 @@ class DOM(Domain):
             {
                 'nodeId': node_id
             },
-            wrapper_class=partial(Array, source='attributes', target=String)
+            wrapper_class=Array,
+            source='attributes',
+            target=String
         )
 
     @classmethod
@@ -90,13 +89,16 @@ class DOM(Domain):
                 'backendNodeId': backend_node_id,
                 'objectId': object_id
             },
-            wrapper_class=partial(BoxModel, source='boxModel')
+            wrapper_class=BoxModel,
+            source='boxModel'
         )
 
     @classmethod
     def get_document(cls):
         return cls.create_frame(
-            cls._GET_DOCUMENT, wrapper_class=partial(Node, source='root')
+            cls._GET_DOCUMENT,
+            wrapper_class=Node,
+            source='root'
         )
 
     @classmethod
@@ -107,7 +109,9 @@ class DOM(Domain):
                 'depth': depth,
                 'pierce': pierce
             },
-            wrapper_class=partial(Array, source='nodes', target=Node)
+            wrapper_class=Array,
+            source='nodes',
+            target=Node
         )
 
     @classmethod
@@ -121,7 +125,8 @@ class DOM(Domain):
                 'backendNodeId': backend_node_id,
                 'objectId': object_id
             },
-            wrapper_class=partial(String, source='outerHTML')
+            wrapper_class=String,
+            source='outerHTML'
         )
 
     @classmethod
@@ -145,7 +150,8 @@ class DOM(Domain):
                 'targetNodeId': target_node_id,
                 'insertBeforeNodeId': insert_before_node_id
             },
-            wrapper_class=partial(NodeId, source='nodeId')
+            wrapper_class=Integer,
+            source='nodeId'
         )
 
     @classmethod
@@ -156,7 +162,8 @@ class DOM(Domain):
                 'nodeId': node_id,
                 'selector': selector
             },
-            wrapper_class=partial(NodeId, source='nodeId')
+            wrapper_class=Integer,
+            source='nodeId'
         )
 
     @classmethod
@@ -167,7 +174,9 @@ class DOM(Domain):
                 'nodeId': node_id,
                 'selector': selector
             },
-            wrapper_class=partial(Array, source='nodeIds', target=NodeId)
+            wrapper_class=Array,
+            source='nodeIds',
+            target=Integer
         )
 
     @classmethod
@@ -184,7 +193,6 @@ class DOM(Domain):
     def remove_node(cls, node_id):
         return cls.create_frame(cls._REMOVE_NODE, {'nodeId': node_id})
 
-
     @classmethod
     def request_child_nodes(cls, node_id, depth=None, pierce=None):
         return cls.create_frame(
@@ -200,7 +208,8 @@ class DOM(Domain):
     def request_node(cls, object_id):
         return cls.create_frame(
             cls._REQUEST_NODE, {'objectId': object_id},
-            wrapper_class=partial(NodeId, source='nodeId')
+            wrapper_class=Integer,
+            source='nodeId'
         )
 
     # TODO

@@ -1,7 +1,7 @@
-from .base import Domain
+from .base import BaseDomain
 
 
-class Page(Domain):
+class Page(BaseDomain):
 
     _ENABLE = 'Page.enable'
     _DISABLE = 'Page.disable'

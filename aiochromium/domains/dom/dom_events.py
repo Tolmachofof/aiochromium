@@ -1,7 +1,7 @@
-from ..base import Domain
+from ..base import BaseDomain
 
 
-class DOMEvents(Domain):
+class DOMEvents(BaseDomain):
 
     _ATTRIBUTE_MODIFIED = 'DOM.attributeModified'
     _ATTRIBUTE_REMOVED = 'DOM.attributeRemoved'

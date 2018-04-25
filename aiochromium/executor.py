@@ -28,6 +28,7 @@ class Executor:
         self.ws = None
         self._loop = loop if loop is not None else asyncio.get_event_loop()
         self._pending_tasks = {}
+        self._events = {}
         self._wrappers = {}
         
     @property
@@ -47,6 +48,7 @@ class Executor:
         while self._is_running:
             try:
                 response = await self.ws.recv()
+                print(response)
                 await self._accept(response)
             except websockets.ConnectionClosed:
                 raise TabConnectionClosed('Closed connection to tab.')
@@ -83,27 +85,23 @@ class Executor:
         return await task_future
 
     async def _accept(self, response):
-        try:
-            response = json.loads(response)
-            response_id = response['id']
-            # ignore message if nobody waits it.
-            if response_id in self._pending_tasks:
-                print(response)
-                self._check_errors(response)
-                if self._pending_tasks[response_id].wrapper_class is not None:
-                    response = self._wrap_result(
-                        response,
-                        self._pending_tasks[response_id].wrapper_class
-                    )
-                self._pending_tasks[response_id].future.set_result(response)
-        except Exception:
-            pass
+        response = json.loads(response)
+        response_id = response['id']
+        # ignore message if nobody waits it.
+        if response_id in self._pending_tasks:
+            self._check_errors(response)
+            if self._pending_tasks[response_id].wrapper_class is not None:
+                response = self._wrap_result(
+                    response,
+                    self._pending_tasks[response_id].wrapper_class
+                )
+            self._pending_tasks[response_id].future.set_result(response)
 
     def _check_errors(self, message):
         pass
 
     def _wrap_result(self, msg, wrapper_class):
-        return wrapper_class.from_response(self, msg['result'])
+        return wrapper_class(msg['result'])
 
     def _create_uid(self):
         self._uid += 1
