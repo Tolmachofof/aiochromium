@@ -1,7 +1,11 @@
 import os
+import sys
 import json
 
 import pytest
+
+myPath = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, myPath + '/../')
 
 from aiochromium.domains.base import Array, String, Integer
 

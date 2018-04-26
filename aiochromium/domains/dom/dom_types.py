@@ -5,26 +5,12 @@ from . import dom_base
 from . import dom_events
 
 
-class BoxModel(BaseType):
-
-    @classmethod
-    def from_response(cls, response_obj):
-        if 'boxModel' in response_obj:
-            return response_obj['boxModel']
-
-
 class BackendNode(BaseType):
+    pass
 
-    def __init__(self, node_type, node_name, backend_node_id):
-        self.node_type = node_type
-        self.node_name = node_name
-        self.backend_node_id = backend_node_id
 
-    @classmethod
-    def to_internal(cls, item, **kwargs):
-        return cls(
-            item['nodeType'], item['nodeName'], item['backendNodeId']
-        )
+class BoxModel(BaseType):
+    pass
 
 
 class Node(BaseType):
@@ -83,3 +69,15 @@ class Node(BaseType):
     @property
     def node_id(self):
         return self._node_id
+
+
+class RGBA(BaseType):
+    pass
+
+
+class ShapeOutsideInfo(BaseType):
+    pass
+
+
+class Rect(BaseType):
+    pass

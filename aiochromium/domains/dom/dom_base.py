@@ -46,7 +46,7 @@ class DOM(BaseDomain):
                 'pierce': pierce
             },
             wrapper_class=Node,
-            source='nodeId'
+            source='node'
         )
 
     @classmethod
