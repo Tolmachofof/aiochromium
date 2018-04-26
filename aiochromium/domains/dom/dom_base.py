@@ -94,9 +94,13 @@ class DOM(BaseDomain):
         )
 
     @classmethod
-    def get_document(cls):
+    def get_document(cls, depth=None, pierce=None):
         return cls.create_frame(
             cls._GET_DOCUMENT,
+            {
+                'depth': depth,
+                'pierce': pierce
+            },
             wrapper_class=Node,
             source='root'
         )
@@ -214,11 +218,14 @@ class DOM(BaseDomain):
 
     # TODO
     @classmethod
-    def resolve_node(cls, node_id, object_group=None):
+    def resolve_node(
+        cls, node_id=None, backend_node_id=None, object_group=None
+    ):
         return cls.create_frame(
             cls._RESOLVE_NODE,
             {
                 'node_id': node_id,
+                'backendNodeId': backend_node_id,
                 'objectGroup': object_group
             }
         )
