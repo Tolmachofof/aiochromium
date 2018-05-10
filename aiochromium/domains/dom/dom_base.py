@@ -45,8 +45,7 @@ class DOM(BaseDomain):
                 'depth': depth,
                 'pierce': pierce
             },
-            wrapper_class=Node,
-            source='node'
+            wrapper_class=Node(source='node')
         )
 
     @classmethod
@@ -75,9 +74,7 @@ class DOM(BaseDomain):
             {
                 'nodeId': node_id
             },
-            wrapper_class=Array,
-            source='attributes',
-            target=String
+            wrapper_class=Array(source='attributes', target=String)
         )
 
     @classmethod
@@ -89,8 +86,7 @@ class DOM(BaseDomain):
                 'backendNodeId': backend_node_id,
                 'objectId': object_id
             },
-            wrapper_class=BoxModel,
-            source='boxModel'
+            wrapper_class=BoxModel(source='boxModel')
         )
 
     @classmethod
@@ -101,8 +97,7 @@ class DOM(BaseDomain):
                 'depth': depth,
                 'pierce': pierce
             },
-            wrapper_class=Node,
-            source='root'
+            wrapper_class=Node(source='root')
         )
 
     @classmethod
@@ -113,9 +108,7 @@ class DOM(BaseDomain):
                 'depth': depth,
                 'pierce': pierce
             },
-            wrapper_class=Array,
-            source='nodes',
-            target=Node
+            wrapper_class=Array(source='nodes', target=Node)
         )
 
     @classmethod
@@ -129,8 +122,7 @@ class DOM(BaseDomain):
                 'backendNodeId': backend_node_id,
                 'objectId': object_id
             },
-            wrapper_class=String,
-            source='outerHTML'
+            wrapper_class=String(source='outerHTML')
         )
 
     @classmethod
@@ -154,8 +146,7 @@ class DOM(BaseDomain):
                 'targetNodeId': target_node_id,
                 'insertBeforeNodeId': insert_before_node_id
             },
-            wrapper_class=Integer,
-            source='nodeId'
+            wrapper_class=Integer(source='nodeId')
         )
 
     @classmethod
@@ -166,8 +157,7 @@ class DOM(BaseDomain):
                 'nodeId': node_id,
                 'selector': selector
             },
-            wrapper_class=Integer,
-            source='nodeId'
+            wrapper_class=Integer(source='nodeId')
         )
 
     @classmethod
@@ -178,9 +168,7 @@ class DOM(BaseDomain):
                 'nodeId': node_id,
                 'selector': selector
             },
-            wrapper_class=Array,
-            source='nodeIds',
-            target=Integer
+            wrapper_class=Array(source='nodeIds', target=Integer)
         )
 
     @classmethod
@@ -212,8 +200,7 @@ class DOM(BaseDomain):
     def request_node(cls, object_id):
         return cls.create_frame(
             cls._REQUEST_NODE, {'objectId': object_id},
-            wrapper_class=Integer,
-            source='nodeId'
+            wrapper_class=Integer(source='nodeId')
         )
 
     # TODO

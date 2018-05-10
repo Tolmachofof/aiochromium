@@ -20,10 +20,6 @@ class BaseDomain:
                 (param, value)
                 for param, value in params.items() if value is not None
             )
-        if wrapper_class is not None:
-            wrapper_class = partial(
-                wrapper_class.from_response, source=source, target=target
-            )
         return RequestFrame(domain_method, params, wrapper_class)
 
 
@@ -31,59 +27,90 @@ class BaseEvent:
     pass
 
 
-class BaseType(metaclass=abc.ABCMeta):
+class BaseField:
 
-    @classmethod
-    @abc.abstractmethod
-    def to_internal(cls, item, blank=False, **kwargs):
+    def __init__(self, source=None, blank=False, default=None):
+        self._source = source
+        self._blank = blank
+        self._default = default
+
+    @property
+    def source(self):
+        return self._source
+
+    @property
+    def blank(self):
+        return self._blank
+
+    @property
+    def default(self):
+        return self._default
+
+    def to_internal(self, item):
         raise NotImplementedError
 
-    @classmethod
-    def from_response(
-        cls, response_obj, blank=False, default=None, source=None, **kwargs
-    ):
-        if response_obj:
-            if source is None:
-                return cls.to_internal(response_obj, **kwargs)
-            elif source in response_obj:
-                return cls.to_internal(response_obj[source])
-            elif blank:
-                return default
+    def from_response(self, response_obj):
+        if self._source is None:
+            return self.to_internal(response_obj)
+        elif response_obj and self._source in response_obj:
+            return self.to_internal(response_obj[self._source])
+        elif self._blank:
+            return self._default
         else:
-            if blank:
-                return default
-            else:
-                raise ValueError
-
-    @classmethod
-    def _get_optional(cls, response_obj, name, wrapper=None, default=None):
-        if name in response_obj:
-            return (
-                wrapper(response_obj[name])
-                if wrapper is not None else response_obj[name]
-            )
-        return default
+            raise AttributeError
 
 
-class String(BaseType):
+class Integer(BaseField):
 
-    @classmethod
-    def to_internal(cls, item, **kwargs):
-        return str(item)
-
-
-class Integer(BaseType):
-
-    @classmethod
-    def to_internal(cls, item, blank=False, **kwargs):
+    def to_internal(self, item):
         return int(item)
 
 
-class Array(BaseType):
+class String(BaseField):
 
-    @classmethod
-    def to_internal(cls, items, blank=False, target=None):
-        if target is not None:
-            return [target.to_internal(item) for item in items]
+    def to_internal(self, item):
+        return str(item)
+
+
+class Array(BaseField):
+
+    def __init__(self, source=None, target=None, blank=False, default=None):
+        super().__init__(source, blank, default)
+        self._target = target
+
+    @property
+    def target(self):
+        return self._target
+
+    def to_internal(self, items):
+        if self._target is not None:
+            return [self._target().to_internal(item) for item in items]
         else:
-            return items
+            return list(items)
+
+
+class ObjectMeta(type):
+
+    def __new__(mcs, name, bases, attrs):
+        new_class = super().__new__(mcs, name, bases, attrs)
+        new_class._fields = []
+        for field, value in attrs.items():
+            if not (field.startswith('__') and field.endswith('__')):
+                new_class.add_to_class(field, value)
+        return new_class
+
+    def add_to_class(cls, field_name, field_value):
+        cls._fields.append(field_name)
+        if hasattr(field_value, 'target') and field_value.target == 'self':
+            field_value.__dict__['_target'] = cls
+        setattr(cls, field_name, field_value)
+
+
+class BaseObject(BaseField, metaclass=ObjectMeta):
+
+    def to_internal(self, item):
+        for field_name in self._fields:
+            field = getattr(self, field_name)
+            setattr(self, field_name, field.from_response(item))
+        return self
+

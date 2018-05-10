@@ -48,7 +48,6 @@ class Executor:
         while self._is_running:
             try:
                 response = await self.ws.recv()
-                print(response)
                 await self._accept(response)
             except websockets.ConnectionClosed:
                 raise TabConnectionClosed('Closed connection to tab.')
@@ -86,22 +85,23 @@ class Executor:
 
     async def _accept(self, response):
         response = json.loads(response)
-        response_id = response['id']
-        # ignore message if nobody waits it.
-        if response_id in self._pending_tasks:
-            self._check_errors(response)
-            if self._pending_tasks[response_id].wrapper_class is not None:
-                response = self._wrap_result(
-                    response,
-                    self._pending_tasks[response_id].wrapper_class
-                )
-            self._pending_tasks[response_id].future.set_result(response)
+        if 'id' in response:
+            response_id = response['id']
+            # ignore message if nobody waits it.
+            if response_id in self._pending_tasks:
+                self._check_errors(response)
+                if self._pending_tasks[response_id].wrapper_class is not None:
+                    response = self._wrap_result(
+                        response,
+                        self._pending_tasks[response_id].wrapper_class
+                    )
+                self._pending_tasks[response_id].future.set_result(response)
 
     def _check_errors(self, message):
         pass
 
     def _wrap_result(self, msg, wrapper_class):
-        return wrapper_class(msg['result'])
+        return wrapper_class.from_response((msg['result']))
 
     def _create_uid(self):
         self._uid += 1
