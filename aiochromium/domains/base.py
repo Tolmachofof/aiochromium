@@ -60,6 +60,12 @@ class BaseField:
             raise AttributeError
 
 
+class BooleanField(BaseField):
+
+    def to_internal(self, item):
+        return bool(item)
+
+
 class Integer(BaseField):
 
     def to_internal(self, item):
@@ -89,21 +95,40 @@ class Array(BaseField):
             return list(items)
 
 
+class Self:
+
+    def __init__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+
+
 class ObjectMeta(type):
 
     def __new__(mcs, name, bases, attrs):
-        new_class = super().__new__(mcs, name, bases, attrs)
-        new_class._fields = []
-        for field, value in attrs.items():
-            if not (field.startswith('__') and field.endswith('__')):
-                new_class.add_to_class(field, value)
+        new_class_fields = {
+            field_name: value for field_name, value in attrs.items()
+            if isinstance(value, (BaseField, Self))
+        }
+        new_class = super().__new__(
+            mcs, name, bases,
+            {
+                field_name: value for field_name, value in attrs.items()
+                if not isinstance(value, (BaseField, Self))
+            }
+        )
+        new_class._fields = list(new_class_fields.keys())
+        for field_name, field in new_class_fields.items():
+            new_class.add_to_class(field_name, field)
         return new_class
 
-    def add_to_class(cls, field_name, field_value):
-        cls._fields.append(field_name)
-        if hasattr(field_value, 'target') and field_value.target == 'self':
-            field_value.__dict__['_target'] = cls
-        setattr(cls, field_name, field_value)
+    def add_to_class(cls, field_name, field):
+        if isinstance(field, Self):
+            setattr(cls, field_name, cls(*field.args, **field.kwargs))
+        elif hasattr(field, 'target') and field.target == Self:
+            field._target = cls
+            setattr(cls, field_name, field)
+        else:
+            setattr(cls, field_name, field)
 
 
 class BaseObject(BaseField, metaclass=ObjectMeta):
@@ -113,4 +138,3 @@ class BaseObject(BaseField, metaclass=ObjectMeta):
             field = getattr(self, field_name)
             setattr(self, field_name, field.from_response(item))
         return self
-

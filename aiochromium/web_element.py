@@ -11,16 +11,19 @@ class WebElement:
 
 class DomElement(WebElement):
 
-    def __init__(self, executor, node):
+    def __init__(self, executor, node_obj):
         super().__init__(executor)
-        if isinstance(node, Node):
-            self._node_id = node.node_id
-        else:
-            self._node_id = node
+        self._node_obj = node_obj
+
+    @classmethod
+    async def init_node(cls, executor, node):
+        if not isinstance(node, Node):
+            node = await executor.execute(DOM.describe_node(node))
+        return cls(executor, node)
 
     @property
     def node_id(self):
-        return self._node_id
+        return self._node_obj.node_id
 
     async def on_attribute_modified(self, name, value):
         return await self._executor.execute(

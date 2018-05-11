@@ -1,4 +1,4 @@
-from .base import BaseDomain
+from ..base import BaseDomain
 
 
 class Page(BaseDomain):
@@ -52,7 +52,7 @@ class Page(BaseDomain):
                 'latitude': latitude,
                 'longitude': longitude,
                 'accuracy': accuracy
-            },
+            }
         )
 
     @classmethod
